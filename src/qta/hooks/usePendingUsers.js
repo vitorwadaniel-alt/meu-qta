@@ -4,12 +4,14 @@ import { collection, onSnapshot, query } from 'firebase/firestore';
 /**
  * Lista de usuários pendentes de aprovação (admin).
  * Caminho: artifacts/{appId}/pending_users
+ * @param {Object} options - { skip: boolean } - quando true (ex: modo demo), não subscreve
  */
-export function usePendingUsers(db, appId) {
+export function usePendingUsers(db, appId, options = {}) {
+  const { skip = false } = options;
   const [pendingUsers, setPendingUsers] = useState([]);
 
   useEffect(() => {
-    if (!db || !appId) {
+    if (!db || !appId || skip) {
       setPendingUsers([]);
       return;
     }
@@ -35,8 +37,14 @@ export function usePendingUsers(db, appId) {
         setPendingUsers([]);
       }
     );
-    return () => unsub();
-  }, [db, appId]);
+    return () => {
+      try {
+        unsub();
+      } catch (_) {
+        // Ignora erro de cleanup do Firestore emulador (INTERNAL ASSERTION FAILED)
+      }
+    };
+  }, [db, appId, skip]);
 
   return pendingUsers;
 }

@@ -1,6 +1,6 @@
 # 🔧 Troubleshooting - Emuladores Firebase
 
-## ❌ Erro: "Não foi possível conectar ao servidor" nas portas 9099/8080
+## ❌ Erro: "Não foi possível conectar ao servidor" nas portas 9199/8180
 
 ### Problema
 O código está tentando conectar aos emuladores, mas eles não estão rodando.
@@ -12,13 +12,13 @@ O código está tentando conectar aos emuladores, mas eles não estão rodando.
    - Você deve ver algo como:
      ```
      ✔  All emulators ready! It is now safe to connect.
-     i  Emulator UI logging to http://localhost:4000
+     i  Emulator UI logging to http://localhost:4100
      ```
 
 2. **Se os emuladores não iniciarem**, verifique:
    - Firebase CLI está instalado: `firebase --version`
    - Você fez login: `firebase login`
-   - As portas 8080, 9099 e 4000 estão livres
+   - As portas 8180, 9199 e 4100 estão livres
 
 3. **Ordem correta de execução**:
    ```bash
@@ -34,7 +34,7 @@ O código está tentando conectar aos emuladores, mas eles não estão rodando.
    - Se não existir, crie na raiz do projeto
 
 5. **Teste se os emuladores estão acessíveis**:
-   - Acesse: http://localhost:4000 (Emulator UI)
+   - Acesse: http://localhost:4100 (Emulator UI)
    - Se não abrir, os emuladores não estão rodando
 
 ## ✅ Checklist
@@ -44,7 +44,7 @@ O código está tentando conectar aos emuladores, mas eles não estão rodando.
 - [ ] Arquivo `.env` existe com `VITE_USE_EMULATORS=true`
 - [ ] Emuladores rodando (`npm run emulators` em um terminal)
 - [ ] Aplicação rodando (`npm run dev` em outro terminal)
-- [ ] Emulator UI acessível (http://localhost:4000)
+- [ ] Emulator UI acessível (http://localhost:4100)
 
 ## 🔍 Verificar Portas
 
@@ -52,9 +52,9 @@ Se as portas estiverem ocupadas:
 
 ```bash
 # macOS/Linux - Verificar portas
-lsof -i :8080
-lsof -i :9099
-lsof -i :4000
+lsof -i :8180
+lsof -i :9199
+lsof -i :4100
 
 # Se estiverem ocupadas, pare os processos ou mude as portas no firebase.json
 ```

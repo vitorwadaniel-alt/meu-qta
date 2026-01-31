@@ -21,7 +21,7 @@ export default function AdminPanel() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [activeDept, setActiveDept] = useState(allDepartments[0]?.id || '');
 
-  const { classes, sysCategories, sysAreas } = useAdminFirestore(db, appId, setSelectedClass);
+  const { classes, sysCategories, sysAreas } = useAdminFirestore(db, appId, setSelectedClass, { skip: isDemoMode });
 
   const [isEditingClass, setIsEditingClass] = useState(false);
   const [classFormName, setClassFormName] = useState('');

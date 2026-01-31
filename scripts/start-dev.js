@@ -14,7 +14,7 @@ const emulators = spawn('npx', ['firebase', 'emulators:start'], {
 function checkEmulatorsReady() {
   return new Promise((resolve) => {
     const check = () => {
-      const req = http.get('http://localhost:4000', (res) => {
+      const req = http.get('http://localhost:4100', (res) => {
         if (res.statusCode === 200) {
           resolve(true);
         } else {

@@ -1,4 +1,4 @@
-import { Calendar, LayoutGrid, List, Plus, RefreshCcw, Settings, Trash2 } from 'lucide-react';
+import { Calendar, LayoutGrid, List, Plus, RefreshCcw, Settings, Trash2, FlaskConical } from 'lucide-react';
 import { VIEW_MODES } from '../constants/viewModes.js';
 import { ICON_MAP, Tag as TagIcon } from '../constants/icons.js';
 import Button from './Button.jsx';
@@ -174,10 +174,17 @@ export default function Sidebar({
         </div>
       </div>
       <div className="py-2 shrink-0 flex items-center justify-center px-4 border-t border-slate-200">
-        <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium leading-none">
-          <RefreshCcw className="shrink-0" size={14} />
-          <span>Sincronizado</span>
-        </div>
+        {import.meta.env.DEV ? (
+          <div className="flex items-center gap-2 text-xs font-medium leading-none text-amber-600">
+            <FlaskConical className="shrink-0" size={14} />
+            <span>Teste Local</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium leading-none">
+            <RefreshCcw className="shrink-0" size={14} />
+            <span>Sincronizado</span>
+          </div>
+        )}
       </div>
     </aside>
   );

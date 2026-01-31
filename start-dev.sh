@@ -10,7 +10,7 @@ echo "⏳ Aguardando emuladores ficarem prontos..."
 sleep 5
 
 # Verificar se os emuladores estão rodando
-until curl -s http://localhost:4000 > /dev/null 2>&1; do
+until curl -s http://localhost:4100 > /dev/null 2>&1; do
   echo "   Aguardando emuladores..."
   sleep 2
 done

@@ -3,18 +3,16 @@ import { BookOpen, Loader2, Menu, Printer, Shield, Target, Undo2, User } from 'l
 import { signOut } from 'firebase/auth';
 import { collection, doc, addDoc, deleteDoc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { auth } from './services/firebase.js';
-import { formatDate } from './utils/dateUtils.js';
+import { formatDate, generateRecurrenceDates } from './utils/dateUtils.js';
 import { VIEW_MODES, CALENDAR_VIEWS } from './constants/viewModes.js';
 import { useQta } from './context/QtaContext.jsx';
 import { useFilteredEvents } from './hooks/useFilteredEvents.js';
-import { useEventMutations } from './hooks/useEventMutations.js';
 import Button from './components/Button.jsx';
 import Toast from './components/Toast.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import SearchBar from './components/SearchBar.jsx';
 import MainContent from './components/MainContent.jsx';
 import {
-  ConfirmModal,
   EventModal,
   ViewEventModal,
   RecurrenceChoiceModal,
@@ -38,7 +36,6 @@ export default function QtaApp() {
   const {
     user,
     loading,
-    isAdmin,
     events,
     categories,
     tags,
@@ -92,8 +89,6 @@ export default function QtaApp() {
   const [areaFormData, setAreaFormData] = useState({ name: '', color: '#6366f1', icon: 'Folder' });
   const [linkToObjectiveId, setLinkToObjectiveId] = useState(null);
   const [isLinkToObjectiveOpen, setIsLinkToObjectiveOpen] = useState(false);
-  const [confirmObjectiveDelete, setConfirmObjectiveDelete] = useState({ isOpen: false, objective: null });
-  const [confirmTagDelete, setConfirmTagDelete] = useState({ isOpen: false, tagId: null });
 
   const storageKeyObjectives = `qta_glow_objectives_${appId || 'default'}`;
   const storageKeyClassManager = `qta_glow_classmanager_${appId || 'default'}`;
@@ -138,8 +133,6 @@ export default function QtaApp() {
     searchFilterClassIds,
     curriculumClasses,
   });
-
-  const { saveEvent, deleteEvent, restoreEvent } = useEventMutations();
 
   const getCategory = (id) =>
     categories.find((c) => c.id === id) || { name: 'Geral', color: '#9ca3af', icon: 'Tag' };
@@ -230,18 +223,102 @@ export default function QtaApp() {
   };
 
   const handleSaveEvent = async () => {
-    const result = await saveEvent({
-      formData,
-      editingEvent,
-      editRecurrenceScope,
-      events,
-      categories,
-    });
-    if (result.success && result.closeModal) {
+    if (isDemoMode) { showToast('Modo DEMO: alterações não são salvas no banco.', 'error'); return; }
+    if (!user) { showToast('Utilizador não autenticado. Tente recarregar a página.', 'error'); return; }
+    if (!formData.title) return showToast('Título obrigatório', 'error');
+    const defaultCatId = categories.length > 0 ? categories[0].id : 'uncategorized';
+    const finalCategoryId = formData.categoryId || defaultCatId;
+    let startDate = null;
+    if (!formData.isUnallocated && formData.date) startDate = new Date(`${formData.date}T${formData.time || '00:00'}`);
+
+    const baseEvent = { title: formData.title, description: formData.description || '', observation: formData.observation ?? '', categoryId: finalCategoryId, tagIds: formData.tagIds || [], isRequirement: formData.isRequirement || false, updatedAt: serverTimestamp(), type: 'event', deletedAt: null };
+    if (editingEvent?.isRequirement) { baseEvent.chapter = editingEvent.chapter || 'Gerais'; baseEvent.originClassName = editingEvent.originClassName || 'Classe'; baseEvent.color = editingEvent.color || '#10b981'; }
+    if (formData.objectiveId) baseEvent.objectiveId = formData.objectiveId;
+    if (editingEvent?.objectiveId) baseEvent.objectiveId = editingEvent.objectiveId;
+
+    try {
+      const batch = writeBatch(db);
+      if (editingEvent) {
+        // Verificar se está editando um evento que faz parte de uma série recorrente
+        const isRecurringEvent = editingEvent.recurrenceGroupId && editRecurrenceScope === 'all';
+        
+        if (isRecurringEvent) {
+          // Editar toda a série: atualizar todos os eventos do grupo
+          const seriesEvents = events.filter(e => e.recurrenceGroupId === editingEvent.recurrenceGroupId);
+          seriesEvents.forEach(ev => {
+            // Manter a data original de cada evento, apenas atualizar os outros campos
+            batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', ev.id), {
+              ...baseEvent,
+              start: ev.start, // Manter a data original
+              recurrenceGroupId: ev.recurrenceGroupId,
+              recurrenceIndex: ev.recurrenceIndex
+            });
+          });
+        } else if (formData.recurrence !== 'none' && !formData.isUnallocated && startDate) {
+          // Se configurou recorrência na edição, criar novo grupo de recorrência
+          const groupId = crypto.randomUUID();
+          const dates = generateRecurrenceDates(startDate, {
+            freq: formData.recurrence,
+            interval: formData.recurrenceInterval || 1,
+            endType: formData.recurrenceEnd || 'never',
+            endDate: formData.recurrenceEndDate || null,
+            endCount: formData.recurrenceEndCount || 10,
+            weekdays: formData.recurrenceWeekdays
+          });
+          // Se estava em um grupo antigo, remover dele primeiro
+          if (editingEvent.recurrenceGroupId && editRecurrenceScope === 'this') {
+            // Remover do grupo antigo (já será feito ao atualizar)
+          }
+          // Atualizar o evento atual e criar as novas ocorrências
+          batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', editingEvent.id), { 
+            ...baseEvent, 
+            start: dates[0], 
+            recurrenceGroupId: groupId, 
+            recurrenceIndex: 0 
+          });
+          // Criar as demais ocorrências
+          dates.slice(1).forEach((d, i) => {
+            batch.set(doc(collection(db, 'artifacts', appId, 'users', user.uid, 'events')), { 
+              ...baseEvent, 
+              start: d, 
+              recurrenceGroupId: groupId, 
+              recurrenceIndex: i + 1, 
+              createdAt: serverTimestamp() 
+            });
+          });
+        } else {
+          // Editar apenas este evento (ou evento sem recorrência)
+          const updateData = { ...baseEvent, start: startDate };
+          // Se tinha recurrenceGroupId e está editando apenas este, remover do grupo
+          if (editingEvent.recurrenceGroupId && editRecurrenceScope === 'this') {
+            updateData.recurrenceGroupId = null;
+            updateData.recurrenceIndex = null;
+          }
+          batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', editingEvent.id), updateData);
+        }
+      } else {
+        if (formData.recurrence !== 'none' && !formData.isUnallocated) {
+          const groupId = crypto.randomUUID();
+          const dates = generateRecurrenceDates(startDate, {
+            freq: formData.recurrence,
+            interval: formData.recurrenceInterval || 1,
+            endType: formData.recurrenceEnd || 'never',
+            endDate: formData.recurrenceEndDate || null,
+            endCount: formData.recurrenceEndCount || 10,
+            weekdays: formData.recurrenceWeekdays
+          });
+          dates.forEach((d, i) => {
+            batch.set(doc(collection(db, 'artifacts', appId, 'users', user.uid, 'events')), { ...baseEvent, start: d, recurrenceGroupId: groupId, recurrenceIndex: i, createdAt: serverTimestamp() });
+          });
+        } else {
+          batch.set(doc(collection(db, 'artifacts', appId, 'users', user.uid, 'events')), { ...baseEvent, start: startDate, createdAt: serverTimestamp() });
+        }
+      }
+      await batch.commit();
       setIsEventModalOpen(false);
       setEditRecurrenceScope(null);
-      if (result.toastMessage) showToast(result.toastMessage);
-    }
+      showToast(editingEvent ? 'Atividade atualizada!' : 'Atividade criada!');
+    } catch (e) { console.error('Erro ao salvar:', e); showToast('Erro ao salvar. Verifique a consola.', 'error'); }
   };
 
   const handleDeleteRequest = (event) => {
@@ -263,23 +340,60 @@ export default function QtaApp() {
   };
 
   const executeDelete = async () => {
-    const result = await deleteEvent({
-      deleteTarget,
-      deleteRecurrenceScope,
-      events,
-    });
-    if (result.success && result.closeModal) {
-      setIsDeleteConfirmOpen(false);
-      setDeleteRecurrenceScope(null);
+    if (isDemoMode) { showToast('Modo DEMO: alterações não são salvas no banco.', 'error'); return; }
+    if (!user) return;
+    const batch = writeBatch(db);
+    
+    // Verificar se está excluindo uma série recorrente
+    const isRecurringEvent = deleteTarget.recurrenceGroupId && deleteRecurrenceScope === 'all';
+    
+    if (isRecurringEvent) {
+      // Excluir toda a série: excluir todos os eventos do grupo
+      const seriesEvents = events.filter(e => e.recurrenceGroupId === deleteTarget.recurrenceGroupId);
+      seriesEvents.forEach(ev => {
+        if (ev.isRequirement && ev.type !== 'trash') {
+          batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', ev.id), { start: null });
+        } else if (ev.type === 'trash') {
+          batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'events', ev.id));
+        } else {
+          batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', ev.id), { type: 'trash', deletedAt: serverTimestamp() });
+        }
+      });
+      showToast(`Série completa excluída (${seriesEvents.length} evento(s)).`);
+    } else {
+      // Excluir apenas este evento
+      if (deleteTarget.isRequirement && deleteTarget.type !== 'trash') { 
+        batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', deleteTarget.id), { start: null }); 
+        showToast('Desagendado'); 
+      }
+      else if (deleteTarget.type === 'trash') { 
+        batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'events', deleteTarget.id)); 
+        showToast('Excluído permanentemente.'); 
+      }
+      else { 
+        batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'events', deleteTarget.id), { type: 'trash', deletedAt: serverTimestamp() }); 
+        showToast('Movido para a lixeira.'); 
+      }
     }
+    
+    await batch.commit();
+    setIsDeleteConfirmOpen(false);
+    setDeleteRecurrenceScope(null);
   };
 
   const executeRestore = async (mode, event) => {
-    const result = await restoreEvent(mode, event);
-    if (result.success && result.closeViewModal) {
+    if (isDemoMode) { showToast('Modo DEMO: alterações não são salvas no banco.', 'error'); return; }
+    if (!user) return;
+    try {
+      const batch = writeBatch(db);
+      const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'events', event.id);
+      if (mode === 'original') batch.update(ref, { type: 'event', deletedAt: null });
+      else if (mode === 'unallocated') batch.update(ref, { type: 'event', deletedAt: null, start: null });
+      await batch.commit();
       setIsViewModalOpen(false);
       setShowRestoreMenu(false);
-    }
+      showToast(mode === 'original' ? 'Restaurado para a data original.' : 'Restaurado para "Não Alocados".');
+    } catch (e) { showToast('Erro ao restaurar', 'error'); }
   };
 
   const handleRemoveEventFromObjective = async (event) => {
@@ -349,15 +463,10 @@ export default function QtaApp() {
     }
   };
 
-  const handleDeleteObjective = (obj) => {
+  const handleDeleteObjective = async (obj) => {
     if (isDemoMode) { showToast('Modo DEMO: alterações não são salvas no banco.', 'error'); return; }
     if (!user || !obj) return;
-    setConfirmObjectiveDelete({ isOpen: true, objective: obj });
-  };
-
-  const executeDeleteObjective = async () => {
-    const obj = confirmObjectiveDelete.objective;
-    if (!obj) return;
+    if (!confirm('Excluir este objetivo? As atividades e requisitos vinculados não serão excluídos, apenas desvinculados.')) return;
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'objectives', obj.id));
@@ -366,7 +475,6 @@ export default function QtaApp() {
       });
       await batch.commit();
       showToast('Objetivo excluído.');
-      setConfirmObjectiveDelete({ isOpen: false, objective: null });
     } catch (e) {
       showToast('Erro ao excluir objetivo.', 'error');
     }
@@ -575,34 +683,6 @@ export default function QtaApp() {
                 )}
               </div>
             </button>
-            {isDemoMode && (
-              <span className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded-lg bg-amber-200 text-amber-800 border border-amber-300">
-                DEMO
-              </span>
-            )}
-            {isAdmin && (
-              <button
-                onClick={() => setIsAdminModalOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-2 rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200 h-9"
-                type="button"
-              >
-                <Shield size={14} className="shrink-0" /> Admin
-              </button>
-            )}
-            <button
-              onClick={() => {
-                setViewMode(VIEW_MODES.PRINT);
-                setPageFilter(null);
-              }}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-2 rounded-lg transition-colors h-9 ${
-                viewMode === VIEW_MODES.PRINT
-                  ? 'bg-slate-200 text-slate-800'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-              type="button"
-            >
-              <Printer size={14} className="shrink-0" /> Impressão
-            </button>
             <button
               onClick={() => {
                 if (!classManagerGlowActive) {
@@ -630,6 +710,33 @@ export default function QtaApp() {
                   </span>
                 )}
               </div>
+            </button>
+            <div className="w-px h-6 bg-slate-200 shrink-0" aria-hidden />
+            {isDemoMode && (
+              <span className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded-lg bg-amber-200 text-amber-800 border border-amber-300">
+                DEMO
+              </span>
+            )}
+            <button
+              onClick={() => setIsAdminModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-2 rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200 h-9"
+              type="button"
+            >
+              <Shield size={14} className="shrink-0" /> Admin
+            </button>
+            <button
+              onClick={() => {
+                setViewMode(VIEW_MODES.PRINT);
+                setPageFilter(null);
+              }}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-2 rounded-lg transition-colors h-9 ${
+                viewMode === VIEW_MODES.PRINT
+                  ? 'bg-slate-200 text-slate-800'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+              type="button"
+            >
+              <Printer size={14} className="shrink-0" /> Impressão
             </button>
             <div className="hidden sm:flex items-center gap-3 pl-2 border-l border-slate-200 h-9">
               <div className="flex flex-col justify-center text-left leading-tight">
@@ -861,26 +968,27 @@ export default function QtaApp() {
             showToast('Erro ao salvar tag.', 'error');
           }
         }}
-        onDelete={(tagId) => {
+        onDelete={async (tagId) => {
           if (isDemoMode) { showToast('Modo DEMO: alterações não são salvas no banco.', 'error'); return; }
-          setConfirmTagDelete({ isOpen: true, tagId });
+          if (confirm('Excluir esta tag? Será removida das atividades.')) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'tags', tagId));
+            showToast('Tag removida.');
+          }
         }}
       />
 
-      {isAdmin && (
-        <AdminModal
-          isOpen={isAdminModalOpen}
-          onClose={() => setIsAdminModalOpen(false)}
-        >
-          <Suspense fallback={
-            <div className="h-full flex items-center justify-center">
-              <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
-            </div>
-          }>
-            <AdminPanel />
-          </Suspense>
-        </AdminModal>
-      )}
+      <AdminModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+      >
+        <Suspense fallback={
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
+          </div>
+        }>
+          <AdminPanel />
+        </Suspense>
+      </AdminModal>
 
       <ObjectiveFormModal
         isOpen={isObjectiveFormOpen}
@@ -957,29 +1065,6 @@ export default function QtaApp() {
             setViewMode(VIEW_MODES.CALENDAR);
           }
           setDeactivationModalModule(null);
-        }}
-      />
-
-      <ConfirmModal
-        isOpen={confirmObjectiveDelete.isOpen}
-        onClose={() => setConfirmObjectiveDelete({ isOpen: false, objective: null })}
-        title="Excluir objetivo"
-        message="Excluir este objetivo? As atividades e requisitos vinculados não serão excluídos, apenas desvinculados."
-        onConfirm={executeDeleteObjective}
-      />
-
-      <ConfirmModal
-        isOpen={confirmTagDelete.isOpen}
-        onClose={() => setConfirmTagDelete({ isOpen: false, tagId: null })}
-        title="Excluir tag"
-        message="Excluir esta tag? Será removida das atividades."
-        onConfirm={async () => {
-          const tagId = confirmTagDelete.tagId;
-          if (tagId) {
-            await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'tags', tagId));
-            showToast('Tag removida.');
-            setConfirmTagDelete({ isOpen: false, tagId: null });
-          }
         }}
       />
 

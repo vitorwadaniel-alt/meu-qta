@@ -38,14 +38,14 @@ O projeto está configurado para usar emuladores do Firebase por padrão (arquiv
    ```
    
    Isso iniciará automaticamente:
-   - 🔥 Emuladores do Firebase (Firestore: 8080, Auth: 9099, UI: 4000)
+   - 🔥 Emuladores do Firebase (Firestore: 8180, Auth: 9199, UI: 4100)
    - ⚡ Aplicação Vite (http://localhost:5173)
    
    A aplicação aguarda os emuladores estarem prontos antes de iniciar.
 
 3. **Acessar**:
    - Aplicação: http://localhost:5173
-   - Emulator UI: http://localhost:4000 (para gerenciar dados)
+   - Emulator UI: http://localhost:4100 (para gerenciar dados)
 
 **💡 Dica:** Para iniciar apenas a aplicação (se os emuladores já estiverem rodando):
 ```bash

@@ -44,9 +44,9 @@ firebase emulators:start
 ```
 
 Isso iniciará:
-- **Firestore Emulator** na porta `8080`
-- **Auth Emulator** na porta `9099`
-- **Emulator UI** na porta `4000` (interface visual para gerenciar dados)
+- **Firestore Emulator** na porta `8180`
+- **Auth Emulator** na porta `9199`
+- **Emulator UI** na porta `4100` (interface visual para gerenciar dados)
 
 ### Iniciar a Aplicação
 
@@ -60,7 +60,7 @@ A aplicação estará disponível em `http://localhost:5173` e se conectará aut
 
 ## 🎨 Emulator UI
 
-Acesse `http://localhost:4000` para:
+Acesse `http://localhost:4100` para:
 - Ver dados do Firestore em tempo real
 - Criar/editar/deletar documentos manualmente
 - Ver usuários autenticados
@@ -70,7 +70,7 @@ Acesse `http://localhost:4000` para:
 
 Se os departamentos padrão não forem criados automaticamente, você pode criá-los manualmente no Emulator UI:
 
-1. Acesse `http://localhost:4000`
+1. Acesse `http://localhost:4100`
 2. Vá em **Firestore**
 3. Navegue até: `artifacts` → `sistema-qta-web` → `public` → `data` → `departments`
 4. Clique em **Add collection** ou adicione documentos com os seguintes dados:
@@ -108,12 +108,12 @@ Se os departamentos padrão não forem criados automaticamente, você pode criá
 
 ### Erro: "Emulators not available"
 - Certifique-se de que `npm run emulators` está rodando
-- Verifique se as portas 8080, 9099 e 4000 estão livres
+- Verifique se as portas 8180, 9199 e 4100 estão livres
 
 ### Erro: "Permission denied"
 - O emulador usa as regras do arquivo `firestore.rules`
 - As regras já estão configuradas para permitir acesso autenticado
 
 ### Dados não aparecem
-- Verifique no Emulator UI (`http://localhost:4000`) se os dados foram criados
+- Verifique no Emulator UI (`http://localhost:4100`) se os dados foram criados
 - Recarregue a página da aplicação

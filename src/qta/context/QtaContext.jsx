@@ -62,7 +62,13 @@ export function QtaProvider({ children }) {
         setIsAdmin(false);
       }
     );
-    return () => unsub();
+    return () => {
+      try {
+        unsub();
+      } catch (_) {
+        // Ignora erro de cleanup do Firestore emulador (INTERNAL ASSERTION FAILED)
+      }
+    };
   }, [user, db, appId]);
 
   // Beta: lista de aprovados e se o usuário está pendente (pending_users)
@@ -91,15 +97,22 @@ export function QtaProvider({ children }) {
       }
     );
     return () => {
-      unsubApproved();
-      unsubPending();
+      try {
+        unsubApproved();
+        unsubPending();
+      } catch (_) {
+        // Ignora erro de cleanup do Firestore emulador (INTERNAL ASSERTION FAILED)
+      }
     };
   }, [user, db, appId]);
 
-  const isApproved = useMemo(
-    () => approvedUids !== null && Array.isArray(approvedUids) && approvedUids.includes(user?.uid),
-    [approvedUids, user?.uid]
-  );
+  // Dev + emuladores: teste@teste.com é sempre aprovado (não afeta produção nem Firestore)
+  const isDevWithEmulators =
+    import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true';
+  const isApproved = useMemo(() => {
+    if (isDevWithEmulators && user?.email === 'teste@teste.com') return true;
+    return approvedUids !== null && Array.isArray(approvedUids) && approvedUids.includes(user?.uid);
+  }, [approvedUids, user?.uid, user?.email, isDevWithEmulators]);
   const isPending = pendingExists === true;
   const loadingApproval = user && (approvedUids === null || pendingExists === null);
 
@@ -107,7 +120,7 @@ export function QtaProvider({ children }) {
   const canLoadUserData = isApproved || isAdmin;
 
   useEffect(() => {
-    if (!user || !canLoadUserData) return;
+    if (!user || !canLoadUserData || isDemoMode) return;
 
     const catQuery = query(collection(db, 'artifacts', appId, 'users', user.uid, 'categories'));
     const unsubCat = onSnapshot(
@@ -197,17 +210,21 @@ export function QtaProvider({ children }) {
     );
 
     return () => {
-      unsubCat();
-      unsubSys();
-      unsubTag();
-      unsubEvent();
-      unsubCurr();
-      unsubDept();
-      unsubSysAreas();
-      unsubUserAreas();
-      unsubObjectives();
+      try {
+        unsubCat();
+        unsubSys();
+        unsubTag();
+        unsubEvent();
+        unsubCurr();
+        unsubDept();
+        unsubSysAreas();
+        unsubUserAreas();
+        unsubObjectives();
+      } catch (_) {
+        // Ignora erro de cleanup do Firestore emulador (INTERNAL ASSERTION FAILED)
+      }
     };
-  }, [user, canLoadUserData]);
+  }, [user, canLoadUserData, isDemoMode]);
 
   const refetchEvents = useCallback(async () => {
     if (!user || isDemoMode) return;

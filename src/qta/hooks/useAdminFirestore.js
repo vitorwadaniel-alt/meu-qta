@@ -23,13 +23,17 @@ function buildPath(appId, name) {
  * Hook que gerencia subscriptions do Firestore para o painel admin.
  * Retorna classes, categorias e áreas, além de um setter para manter
  * selectedClass sincronizado quando os dados forem atualizados.
+ * @param {Object} options - { skip: boolean } - quando true (ex: modo demo), não subscreve
  */
-export function useAdminFirestore(db, appId, setSelectedClass) {
+export function useAdminFirestore(db, appId, setSelectedClass, options = {}) {
+  const { skip = false } = options;
   const [classes, setClasses] = useState([]);
   const [sysCategories, setSysCategories] = useState([]);
   const [sysAreas, setSysAreas] = useState([]);
 
   useEffect(() => {
+    if (!db || !appId || skip) return;
+
     const qClasses = query(
       collection(db, ...buildPath(appId, 'classes'))
     );
@@ -75,11 +79,15 @@ export function useAdminFirestore(db, appId, setSelectedClass) {
     );
 
     return () => {
-      unsubClasses();
-      unsubCats();
-      unsubAreas();
+      try {
+        unsubClasses();
+        unsubCats();
+        unsubAreas();
+      } catch (_) {
+        // Ignora erro de cleanup do Firestore emulador (INTERNAL ASSERTION FAILED)
+      }
     };
-  }, [db, appId, setSelectedClass]);
+  }, [db, appId, setSelectedClass, skip]);
 
   return { classes, sysCategories, sysAreas };
 }

@@ -7,17 +7,18 @@ service cloud.firestore {
     }
 
     // Helper: usuário é admin? (só usar onde exists(admins) já foi garantido)
+    // Usa .get('uids', []) para evitar Null value error quando uids não existe
     function isAdmin(appId) {
       return isAuthenticated()
         && exists(/databases/$(database)/documents/artifacts/$(appId)/config/admins)
-        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.uids;
+        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.get('uids', []);
     }
 
     // Lista de UIDs de administradores (documento único: uids: string[])
     match /artifacts/{appId}/config/admins {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.uids;
-      allow update, delete: if isAuthenticated() && request.auth.uid in resource.data.uids;
+      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.get('uids', []);
+      allow update, delete: if isAuthenticated() && request.auth.uid in resource.data.get('uids', []);
     }
 
     // Lista de UIDs aprovados para acessar o app (beta): documento único uids: string[]
@@ -42,7 +43,7 @@ service cloud.firestore {
       // Escrita apenas para administradores (quem está em config/admins)
       allow write: if isAuthenticated()
         && exists(/databases/$(database)/documents/artifacts/$(appId)/config/admins)
-        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.uids;
+        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.get('uids', []);
     }
     
     // Regras para dados do usuário (categories, tags, events) – cada usuário só acessa seu calendário

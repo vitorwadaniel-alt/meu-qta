@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { auth, googleAuthProvider } from '../../services/firebase.js';
 import Button from '../Button.jsx';
+
+// Credenciais de dev: só têm efeito com emuladores (nunca em produção)
+const isDevWithEmulators =
+  import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true';
+const DEV_EMAIL = 'teste@teste.com';
+const DEV_PASSWORD = 'teste12'; // mínimo 6 caracteres (exigência do Firebase Auth)
 
 export default function Login({ onSwitchToSignUp, onSuccess }) {
   const [email, setEmail] = useState('');
@@ -20,6 +26,24 @@ export default function Login({ onSwitchToSignUp, onSuccess }) {
     }
     setLoading(true);
     try {
+      // Em dev com emuladores: teste@teste.com / teste — cria usuário no emulador se não existir
+      if (isDevWithEmulators && email.trim().toLowerCase() === DEV_EMAIL && password === DEV_PASSWORD) {
+        try {
+          await signInWithEmailAndPassword(auth, email.trim(), password);
+        } catch (signInErr) {
+          if (
+            signInErr.code === 'auth/user-not-found' ||
+            signInErr.code === 'auth/invalid-credential'
+          ) {
+            await createUserWithEmailAndPassword(auth, email.trim(), password);
+            // usuário criado no emulador; já está logado
+          } else {
+            throw signInErr;
+          }
+        }
+        onSuccess?.();
+        return;
+      }
       await signInWithEmailAndPassword(auth, email.trim(), password);
       onSuccess?.();
     } catch (err) {

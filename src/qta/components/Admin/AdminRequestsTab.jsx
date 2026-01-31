@@ -8,8 +8,8 @@ import Button from '../Button.jsx';
 import { firebaseApp } from '../../services/firebase.js';
 
 export default function AdminRequestsTab() {
-  const { db, appId, showToast, checkDemo } = useQta();
-  const pendingUsers = usePendingUsers(db, appId);
+  const { db, appId, showToast, checkDemo, isDemoMode } = useQta();
+  const pendingUsers = usePendingUsers(db, appId, { skip: isDemoMode });
   const [searchEmail, setSearchEmail] = useState('');
   const [actioningId, setActioningId] = useState(null);
 
