@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: usuário é admin? (só usar onde exists(admins) já foi garantido)
+    function isAdmin(appId) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/artifacts/$(appId)/config/admins)
+        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.uids;
+    }
+
+    // Lista de UIDs de administradores (documento único: uids: string[])
+    match /artifacts/{appId}/config/admins {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.uids;
+      allow update, delete: if isAuthenticated() && request.auth.uid in resource.data.uids;
+    }
+
+    // Lista de UIDs aprovados para acessar o app (beta): documento único uids: string[]
+    match /artifacts/{appId}/config/approved {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(appId);
+    }
+
+    // Solicitações de acesso (beta): um doc por uid com email, displayName, createdAt
+    match /artifacts/{appId}/pending_users/{uid} {
+      allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin(appId));
+      allow create: if isAuthenticated() && request.auth.uid == uid;
+      allow update: if isAdmin(appId);
+      allow delete: if isAdmin(appId);
+    }
+    
+    // Regras para dados públicos (departments, classes, system_categories)
+    match /artifacts/{appId}/public/data/{document=**} {
+      // Permitir leitura para usuários autenticados
+      allow read: if isAuthenticated();
+      
+      // Escrita apenas para administradores (quem está em config/admins)
+      allow write: if isAuthenticated()
+        && exists(/databases/$(database)/documents/artifacts/$(appId)/config/admins)
+        && request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/config/admins).data.uids;
+    }
+    
+    // Regras para dados do usuário (categories, tags, events) – cada usuário só acessa seu calendário
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}

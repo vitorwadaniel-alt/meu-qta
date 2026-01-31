@@ -1,0 +1,561 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base pra app fullscreen */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Gradiente rotativo – aura que gira ao redor do botão */
+@keyframes aura-spin {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Pulsação suave do brilho */
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 8px var(--glow-shadow));
+  }
+  50% {
+    filter: brightness(1.15) drop-shadow(0 0 12px var(--glow-shadow));
+  }
+}
+
+/* Botão ativado – Objetivos Maiores (índigo/violeta) */
+.btn-ambient-glow-objectives {
+  --glow-shadow: rgba(129, 140, 248, 0.6);
+  position: relative;
+  background: linear-gradient(180deg, #3730a3 0%, #312e81 50%, #1e1b4b 100%) !important;
+  color: #c7d2fe !important;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background-clip: padding-box;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.btn-ambient-glow-objectives::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.5rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(129, 140, 248, 0.8),
+    rgba(165, 180, 252, 0.6),
+    rgba(99, 102, 241, 0.4),
+    rgba(139, 92, 246, 0.6),
+    rgba(129, 140, 248, 0.8)
+  );
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aura-spin 4s linear infinite;
+  z-index: -1;
+}
+
+.btn-ambient-glow-objectives:hover {
+  color: #e0e7ff !important;
+}
+
+/* Botão ativado – Gerenciador de Classes (ciano/azul) */
+.btn-ambient-glow-classmanager {
+  --glow-shadow: rgba(34, 211, 238, 0.6);
+  position: relative;
+  background: linear-gradient(180deg, #0e7490 0%, #155e75 50%, #164e63 100%) !important;
+  color: #a5f3fc !important;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background-clip: padding-box;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.btn-ambient-glow-classmanager::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.5rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(34, 211, 238, 0.8),
+    rgba(103, 232, 249, 0.6),
+    rgba(6, 182, 212, 0.4),
+    rgba(14, 165, 233, 0.6),
+    rgba(34, 211, 238, 0.8)
+  );
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aura-spin 4s linear infinite;
+  z-index: -1;
+}
+
+.btn-ambient-glow-classmanager:hover {
+  color: #cffafe !important;
+}
+
+/* Botão Desativar Módulo – vermelho com glow (pulsação mais lenta) */
+.btn-ambient-glow-red {
+  --glow-shadow: rgba(248, 113, 113, 0.6);
+  position: relative;
+  background: linear-gradient(180deg, #b91c1c 0%, #991b1b 50%, #7f1d1d 100%) !important;
+  color: #fecaca !important;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background-clip: padding-box;
+  animation: glow-pulse 10s ease-in-out infinite;
+}
+
+.btn-ambient-glow-red::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.5rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(248, 113, 113, 0.8),
+    rgba(252, 165, 165, 0.6),
+    rgba(239, 68, 68, 0.4),
+    rgba(220, 38, 38, 0.6),
+    rgba(248, 113, 113, 0.8)
+  );
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aura-spin 12s linear infinite;
+  z-index: -1;
+}
+
+.btn-ambient-glow-red:hover {
+  color: #fef2f2 !important;
+}
+
+/* Página TURBO – tema dark + energia/combustível – Objetivos Maiores */
+.page-glow-objectives {
+  --glow-r: 99;
+  --glow-g: 102;
+  --glow-b: 241;
+  position: relative;
+  overflow: visible;
+  border: 2px solid transparent;
+  background: linear-gradient(
+    140deg,
+    #0f0a1e 0%,
+    #1a1035 25%,
+    #2d1b4e 50%,
+    #312e81 75%,
+    #1e3a5f 100%
+  );
+  background-clip: padding-box;
+  box-shadow:
+    0 0 40px rgba(129, 140, 248, 0.45),
+    0 0 80px rgba(99, 102, 241, 0.25),
+    inset 0 0 60px rgba(99, 102, 241, 0.08),
+    0 0 0 1px rgba(129, 140, 248, 0.2);
+  animation: page-glow-breath 6s ease-in-out infinite;
+}
+
+.page-glow-objectives::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(129, 140, 248, 0.8),
+    rgba(165, 180, 252, 0.5),
+    rgba(99, 102, 241, 0.4),
+    rgba(139, 92, 246, 0.6),
+    rgba(129, 140, 248, 0.8)
+  );
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aura-spin 5s linear infinite;
+  z-index: -1;
+}
+
+.page-glow-objectives::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 80% at 70% 0%, rgba(167, 139, 250, 0.2) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-glow-objectives > *:not(.ambient-blobs):not(.nitro-badge) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fundo nitro – gradiente rico e vibrante (referência Eco) */
+.nitro-page-bg-objectives {
+  background: linear-gradient(
+    140deg,
+    #0f0a1e 0%,
+    #1a1035 20%,
+    #2d1b4e 40%,
+    #312e81 60%,
+    #1e3a5f 80%,
+    #0c1929 100%
+  );
+}
+
+.nitro-page-bg-classmanager {
+  background: linear-gradient(
+    140deg,
+    #0a1628 0%,
+    #0e2d4a 25%,
+    #164e63 45%,
+    #0e7490 65%,
+    #06b6d4 85%,
+    #0c1929 100%
+  );
+}
+
+/* Header com vidro fosco – DIRETO sobre as blobs, fundo em movimento visível */
+.page-header-glass {
+  margin: 12px 12px 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header TURBO – fundo mais opaco para legibilidade (texto claro sobre fundo escuro) */
+.page-header-glass.nitro-readable {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+/* Painel de conteúdo – ilha clara (só área rolável) */
+.page-content-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 12px 12px;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+/* Badge TURBO – indicador de módulo ativo (integração harmônica no header) */
+.nitro-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #e0e7ff;
+  background: rgba(30, 27, 75, 0.7);
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  border-radius: 9999px;
+  box-shadow:
+    0 0 20px rgba(129, 140, 248, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: nitro-pulse 2.5s ease-in-out infinite;
+  backdrop-filter: blur(8px);
+}
+
+/* Badge TURBO integrado no fluxo do header – alinhamento harmônico */
+.nitro-badge.nitro-badge-inline {
+  position: relative;
+  top: auto;
+  right: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.nitro-badge.classmanager {
+  --nitro-r: 34;
+  --nitro-g: 211;
+  --nitro-b: 238;
+  color: #cffafe;
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow:
+    0 0 20px rgba(34, 211, 238, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.nitro-badge:not(.classmanager) {
+  --nitro-r: 129;
+  --nitro-g: 140;
+  --nitro-b: 248;
+}
+
+.nitro-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  animation: nitro-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes nitro-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(var(--nitro-r, 129), var(--nitro-g, 140), var(--nitro-b, 248), 0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+  50% { opacity: 0.9; box-shadow: 0 0 28px rgba(var(--nitro-r, 129), var(--nitro-g, 140), var(--nitro-b, 248), 0.55), inset 0 1px 0 rgba(255,255,255,0.1); }
+}
+
+@keyframes nitro-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+/* Formas orgânicas – líquido iridescente Objetivos Maiores */
+.ambient-blobs.objectives {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.ambient-blobs.objectives .blob {
+  position: absolute;
+  border-radius: 40% 60% 70% 30% / 50% 60% 40% 50%;
+  filter: blur(50px);
+  opacity: 0.7;
+  animation: blob-float 12s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.ambient-blobs.objectives .blob-1 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(
+    ellipse 80% 80% at 30% 30%,
+    rgba(167, 139, 250, 0.6) 0%,
+    rgba(99, 102, 241, 0.4) 40%,
+    rgba(236, 72, 153, 0.2) 70%,
+    transparent 100%
+  );
+  top: -20%;
+  right: -15%;
+  animation-delay: 0s;
+}
+
+.ambient-blobs.objectives .blob-2 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    ellipse 70% 90% at 70% 30%,
+    rgba(34, 211, 238, 0.4) 0%,
+    rgba(139, 92, 246, 0.5) 50%,
+    rgba(236, 72, 153, 0.25) 80%,
+    transparent 100%
+  );
+  bottom: 10%;
+  right: 5%;
+  animation-delay: -4s;
+}
+
+.ambient-blobs.objectives .blob-3 {
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(
+    ellipse 90% 70% at 20% 80%,
+    rgba(139, 92, 246, 0.5) 0%,
+    rgba(99, 102, 241, 0.35) 45%,
+    rgba(34, 211, 238, 0.2) 75%,
+    transparent 100%
+  );
+  bottom: -25%;
+  left: -12%;
+  animation-delay: -8s;
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
+  25% { transform: translate(25px, -30px) scale(1.05) rotate(2deg); opacity: 0.8; }
+  50% { transform: translate(-20px, 25px) scale(0.98) rotate(-1deg); opacity: 0.65; }
+  75% { transform: translate(15px, 15px) scale(1.02) rotate(1deg); opacity: 0.75; }
+}
+
+/* Página TURBO – Gerenciador de Classes */
+.page-glow-classmanager {
+  --glow-r: 6;
+  --glow-g: 182;
+  --glow-b: 212;
+  position: relative;
+  overflow: visible;
+  border: 2px solid transparent;
+  background: linear-gradient(
+    140deg,
+    #0a1628 0%,
+    #0e2d4a 30%,
+    #164e63 50%,
+    #0e7490 70%,
+    #06b6d4 90%,
+    #0c1929 100%
+  );
+  background-clip: padding-box;
+  box-shadow:
+    0 0 40px rgba(34, 211, 238, 0.45),
+    0 0 80px rgba(6, 182, 212, 0.25),
+    inset 0 0 60px rgba(6, 182, 212, 0.08),
+    0 0 0 1px rgba(34, 211, 238, 0.2);
+  animation: page-glow-breath 6s ease-in-out infinite;
+}
+
+.page-glow-classmanager::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.8),
+    rgba(103, 232, 249, 0.5),
+    rgba(6, 182, 212, 0.4),
+    rgba(14, 165, 233, 0.6),
+    rgba(34, 211, 238, 0.8)
+  );
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aura-spin 5s linear infinite;
+  z-index: -1;
+}
+
+.page-glow-classmanager::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 80% at 80% 0%, rgba(34, 211, 238, 0.25) 0%, rgba(6, 182, 212, 0.1) 45%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-glow-classmanager > *:not(.ambient-blobs):not(.nitro-badge) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Formas orgânicas – líquido iridescente Gerenciador */
+.ambient-blobs.classmanager {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.ambient-blobs.classmanager .blob {
+  position: absolute;
+  border-radius: 60% 40% 50% 50% / 40% 70% 30% 60%;
+  filter: blur(50px);
+  opacity: 0.7;
+  animation: blob-float 14s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.ambient-blobs.classmanager .blob-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    ellipse 80% 80% at 70% 20%,
+    rgba(34, 211, 238, 0.6) 0%,
+    rgba(6, 182, 212, 0.45) 40%,
+    rgba(139, 92, 246, 0.25) 70%,
+    transparent 100%
+  );
+  top: -18%;
+  right: -12%;
+  animation-delay: -2s;
+}
+
+.ambient-blobs.classmanager .blob-2 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(
+    ellipse 70% 85% at 30% 70%,
+    rgba(103, 232, 249, 0.5) 0%,
+    rgba(14, 165, 233, 0.4) 45%,
+    rgba(236, 72, 153, 0.2) 80%,
+    transparent 100%
+  );
+  bottom: 5%;
+  right: 10%;
+  animation-delay: -6s;
+}
+
+.ambient-blobs.classmanager .blob-3 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(
+    ellipse 85% 75% at 15% 85%,
+    rgba(14, 165, 233, 0.5) 0%,
+    rgba(34, 211, 238, 0.4) 50%,
+    rgba(99, 102, 241, 0.2) 75%,
+    transparent 100%
+  );
+  bottom: -20%;
+  left: -10%;
+  animation-delay: -10s;
+}
+
+/* Respiração do glow – energia viva */
+@keyframes page-glow-breath {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.45),
+      0 0 80px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.25),
+      inset 0 0 60px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.08),
+      0 0 0 1px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 52px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.55),
+      0 0 96px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.3),
+      inset 0 0 80px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.12),
+      0 0 0 1px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.25);
+  }
+}
